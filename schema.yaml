@@ -1,0 +1,132 @@
+title: "ROCKIT Base Environment"
+stackDescription: "Base Environment for ROCKITPLAY Cloud Service instances"
+schemaVersion: 1.1.0
+version: "20190404"
+locale: "en"
+
+groupings:
+
+  - title: "Predefined General Configuration"
+    visible: false
+    variables:
+    - tenancy_ocid
+    - compartment_ocid
+    - region
+
+  - title: "OCI Vault"
+    visible: true
+    variables:
+    - create_vault
+    - vault_comp_ocid
+    - use_vault_ocid
+
+  - title: "OCI DNS"
+    visible: true
+    variables:
+    - WITH_CERT
+    - CERT_OCID
+    - CERT_DOMAINNAME
+
+  - title: "MongoDB Atlas"
+    visible: true
+    variables:
+    - MONGODBATLAS_ORGID
+    - MONGODBATLAS_ADMIN_PUBKEY
+    - MONGODBATLAS_ADMIN_PRIVKEY
+
+  - title: "Slack"
+    visible: true
+    variables:
+    - SLACK_TOKEN
+
+variables:
+
+  create_vault:
+    title: "Create new OCI Vault"
+    description: "ROCKITPLAY requires access to an OCI Vault to manage its secrets.
+                  Please choose if ROCKITPLAY should create a new OCI Vault or if it
+                  should utilize an existing one. Note, that the default maximum
+                  number of available vaults is set to 10. However, it can be increased
+                  by requesting a limit increase in the OCI Console.
+                  If unsure, simply choose to create a new vault."
+    type: boolean
+    default: true
+
+  vault_comp_ocid:
+    type: oci:identity:compartment:id
+    title: "Vault Compartment"
+    description: "Select the compartment which contains the vault to be used."
+    visible:
+      not:
+      - ${create_vault}
+
+  use_vault_ocid:
+    type: oci:kms:vault:id
+    title: "OCI Vault OCID"
+    description: "Please enter the OCID of the OCI Vault that ROCKITPLAY should use
+                  to manage its secrets."
+    dependsOn:
+      compartmentId: ${vault_comp_ocid}
+    required: true
+    visible:
+      not:
+      - ${create_vault}
+
+  WITH_CERT:
+    title: "SSL Certificate"
+    description: "The ROCKITPLAY Cloud Services can be accessed by RESTful APIs via https.
+                  The base URLs of the ROCKITPLAY Cloud Services ROCKIT Edge and ROCKIT Engine
+                  can use an SSL certificate belonging to your companies domain name such as
+                  edge.cloud.acme.com or engine.cloud.acme.com. Alternatively, generic domain
+                  names will be assigned. Do you want the ROCKITPLAY Cloud Services to use the
+                  wildcard SSL certificate?"
+    type: boolean
+    visible: true
+    required: true
+    pattern: "^ocid1.certificate."
+
+  CERT_OCID:
+    title: "SSL Certificate OCID"
+    description: "Please enter the OCID of the imported wildcard certificate here."
+    visible: ${WITH_CERT}
+    type: string
+    required: true
+    pattern: "^ocid1.certificate."
+
+  CERT_DOMAINNAME:
+    title: "SSL Domain Name"
+    description: "Please enter the domain name of the above mentioned SSL certificate.,
+                  e.g.,cloud.acme.com"
+    visible: ${WITH_CERT}
+    type: string
+    required: true
+    pattern: "^[A-Za-z]+"
+
+  MONGODBATLAS_ORGID:
+    title: "MongoDB Atlas Organization ID"
+    description: "Please create a MongoDB Atlas account, setup a payment method (for
+                  production and staging) and enter the MongoDB Atlas organization ID.
+                  The organization ID can be obtained from the MongoDB Atlas web console"
+    type: string
+    required: true
+
+  MONGODBATLAS_ADMIN_PUBKEY:
+    title: "MongoDB Atlas Administrator User Public Key"
+    description: "Please provide the public key of the MongoDB Atlas Administrator user."
+    type: string
+    required: true
+
+  MONGODBATLAS_ADMIN_PRIVKEY:
+    title: "MongoDB Atlas Administrator User Private Key"
+    description: "Please provide the private key of the MongoDB Atlas Administrator user."
+    type: string
+    sensitive: true
+    required: true
+
+  SLACK_TOKEN:
+    title: "Slack token"
+    description: "Please create a Slack bot which will be used by the ROCKITPLAY
+                  cloud services to send slack notifications."
+    type: string
+    sensitive: true
+    required: true
