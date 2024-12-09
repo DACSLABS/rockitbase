@@ -13,6 +13,12 @@ groupings:
     - compartment_ocid
     - region
 
+  - title: ROCKIT Base Environment
+    visible: true
+    variables:
+    - dacslabs_link_b64
+    - WORKSPACE
+
   - title: "OCI Vault"
     visible: true
     variables:
@@ -40,6 +46,25 @@ groupings:
     - SLACK_TOKEN
 
 variables:
+
+
+  dacslabs_link_b64:
+    type: string
+    title: "DACSLABS Access Link"
+    description: "Please paste the access link you obtained from DACSLABS.
+                  Contact info@dacs-labs.com"
+    visible: true
+    required: true
+    pattern: "^dacslabslnk1.[-A-Za-z0-9+/]*={0,3}$"
+
+  WORKSPACE:
+    type: string
+    title: "Environment Identifier"
+    description: "Please provide an identifier which will be used as suffix to all
+                  resources belonging to this ROCKIT Base Environment.
+                  If you plan to deploy a production system only simply use 'prod' or 'live'"
+    required: true
+    pattern: "^[a-z][a-z0-9]{1,19}$"
 
   create_vault:
     title: "Create new OCI Vault"

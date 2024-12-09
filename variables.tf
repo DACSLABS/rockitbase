@@ -4,6 +4,9 @@ variable "compartment_ocid" { }
 variable "region" { }
 
 # --- user-input by OCI
+variable "dacslabs_link_b64"  { type = string }
+variable "WORKSPACE"          { type = string }
+
 variable "create_vault" {
   type = bool
 }
@@ -40,4 +43,13 @@ variable "MONGODBATLAS_ADMIN_PRIVKEY"  {
 variable "SLACK_TOKEN" {
   type      = string
   sensitive = true
+}
+
+locals {
+  workspace     = lower (var.WORKSPACE)
+  WORKSPACE     = upper (var.WORKSPACE)
+  dacslabs_link = base64decode (split (".", var.dacslabs_link_b64)[1])
+  base_dx_url   = split (",", local.dacslabs_link)[0]
+  engine_dx_url = split (",", local.dacslabs_link)[1]
+  edge_dx_url   = split (",", local.dacslabs_link)[2]
 }

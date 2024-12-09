@@ -65,6 +65,18 @@ resource "oci_vault_secret" "rockitplay_cert_domainname" {
    }
 }
 
+resource "oci_vault_secret" "rockitplay_loader_image" {
+   compartment_id = var.compartment_ocid
+   vault_id       = local.vault_ocid
+   key_id         = oci_kms_key.rockitplay_vault_key.id
+   secret_name    = "ROCKITPLAY_LOADER_IMAGE_OCID.${random_password.baseenv_id.result}"
+   description    = "OCID of the ROCKITPLAY task loader image"
+   secret_content {
+      content_type = "BASE64"
+      content      = base64encode(data.oci_core_images.loader_images.images[0].id)
+   }
+}
+
 resource "oci_vault_secret" "rockitplay_mongodbatlas_orgid" {
    compartment_id = var.compartment_ocid
    vault_id       = local.vault_ocid
@@ -114,34 +126,112 @@ resource "oci_vault_secret" "rockitplay_slack_token" {
 }
 
 # --- ROCKITPLAY Tags
-resource "oci_identity_tag_namespace" "rockitplay_tag_namespace" {
+resource "null_resource" "rockitplay_tag_namespace" {
+   triggers = {
+     always = timestamp ()
+   }
+   provisioner "local-exec" {
+      interpreter = [ "/bin/bash", "-c" ]
+      command = <<EOT
+
+      # Variables
+      COMPARTMENT_ID="${var.tenancy_ocid}"
+      NAMESPACE_NAME="ROCKITPLAY-Tags"
+      NAMESPACE_DESCRIPTION="Tag namespace for all ROCKITPLAY instances"
+
+      oci iam tag-namespace create \
+      --compartment-id "$COMPARTMENT_ID" \
+      --name "$NAMESPACE_NAME" \
+      --description "$NAMESPACE_DESCRIPTION" \
+      2>/dev/null \
+      || echo "Namespace $NAMESPACE_NAME already exists, ignoring."
+
+      NAMESPACE_ID=$(oci iam tag-namespace list --compartment-id "$COMPARTMENT_ID" --all | jq -r --arg NAMESPACE_NAME "$NAMESPACE_NAME" '.data[] | select(.name == $NAMESPACE_NAME) | .id')
+
+      oci iam tag create --name "orgName"  --is-cost-tracking true --description "ROCKIT organization identifier" --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+      oci iam tag create --name "appName"  --is-cost-tracking true --description "ROCKIT app identifier"          --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+      oci iam tag create --name "taskType" --is-cost-tracking true --description "ROCKIT task identifier"         --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+
+      oci iam tag create --name "instanceName" --is-cost-tracking false --description "ROCKIT instance name"      --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+      oci iam tag create --name "taskLoader"   --is-cost-tracking false --description "ROCKIT Task Loader"        --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+      oci iam tag create --name "hash"         --is-cost-tracking false --description "Git commit or source hash" --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+
+      EOT
+   }
+}
+
+# resource "oci_identity_tag_namespace" "rockitplay_tag_namespace" {
+#    count          = local.tag_namespace_exists == false ? 1 : 0
+#    compartment_id = var.tenancy_ocid
+#    description    = "ROCKITPLAY Tags"
+#    name           = "ROCKITPLAY-Tags"
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "appName" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "ROCKIT App Name"
+#    name             = "appName"
+#    is_cost_tracking = true
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "instanceName" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "ROCKIT Instance Name"
+#    name             = "instanceName"
+#    is_cost_tracking = true
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "orgName" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "ROCKIT Organization Name"
+#    name             = "orgName"
+#    is_cost_tracking = true
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "taskType" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "ROCKIT Task Type"
+#    name             = "taskType"
+#    is_cost_tracking = true
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "taskLoader" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "ROCKIT Task Loader"
+#    name             = "taskLoader"
+#    is_cost_tracking = false
+#    lifecycle { prevent_destroy = true }
+# }
+# resource "oci_identity_tag" "hash" {
+#    count            = local.tag_namespace_exists == false ? 1 : 0
+#    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace[0].id
+#    description      = "Git commit or source hash"
+#    name             = "hash"
+#    is_cost_tracking = false
+#    lifecycle { prevent_destroy = true }
+# }
+
+resource "oci_identity_dynamic_group" "rockit_loader_dyngrp" {
     compartment_id = var.tenancy_ocid
-    description    = "ROCKITPLAY Tags"
-    name           = "ROCKITPLAY-Tags"
+    description    = "ROCKIT Task Loader [${random_password.baseenv_id.result}]"
+    matching_rule  = "tag.ROCKITPLAY-Tags.taskLoader.value = 'rockit-loader-${random_password.baseenv_id.result}'"
+    name           = "rockit-loader-dyngrp-${random_password.baseenv_id.result}"
 }
-resource "oci_identity_tag" "appName" {
-    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace.id
-    description      = "ROCKIT App Name"
-    name             = "appName"
-    is_cost_tracking = true
-}
-resource "oci_identity_tag" "instanceName" {
-    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace.id
-    description      = "ROCKIT Instance Name"
-    name             = "instanceName"
-    is_cost_tracking = true
-}
-resource "oci_identity_tag" "orgName" {
-    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace.id
-    description      = "ROCKIT Organization Name"
-    name             = "orgName"
-    is_cost_tracking = true
-}
-resource "oci_identity_tag" "taskType" {
-    tag_namespace_id = oci_identity_tag_namespace.rockitplay_tag_namespace.id
-    description      = "ROCKIT Task Type"
-    name             = "taskType"
-    is_cost_tracking = true
+
+
+resource "oci_identity_policy" "rockit_loader_tenancy_rt_pol" {
+   compartment_id = var.tenancy_ocid
+   description    = "ROCKIT Loader [${random_password.baseenv_id.result}] Runtime Tenancy Policy"
+   name           = "rockit-loader-tenancy-rt-pol-${random_password.baseenv_id.result}"
+   depends_on     = [ oci_identity_dynamic_group.rockit_loader_dyngrp ]
+   statements     = [
+      "Allow dynamic-group rockit-loader-dyngrp-${random_password.baseenv_id.result} to use instance-family in compartment id ${var.compartment_ocid}",
+   ]
 }
 
 locals {
