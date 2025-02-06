@@ -12,10 +12,14 @@ variable "create_vault" {
 }
 
 variable "use_vault_ocid" {
-  type = string
+  type    = string
+  default = ""
 }
 
-variable "vault_comp_ocid" { type = string }
+variable "vault_comp_ocid" {
+  type    = string
+  default = ""
+}
 
 variable "WITH_CERT"       {
   type    = bool

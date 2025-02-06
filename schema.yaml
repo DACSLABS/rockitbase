@@ -12,6 +12,7 @@ groupings:
     - tenancy_ocid
     - compartment_ocid
     - region
+    - VERSION
 
   - title: ROCKIT Base Environment
     visible: true
