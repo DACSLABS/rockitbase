@@ -27,7 +27,7 @@ resource "null_resource" "loader_img" {
       interpreter = [ "/bin/bash", "-c" ]
       command = <<-EOT
          set -e
-         requestId=$(oci compute image import from-object-uri --compartment-id ${var.compartment_ocid} --uri ${local.base_loader_url} --display-name "loader-img-${local.workspace}" --defined-tags '{"ROCKITPLAY-Tags": {"hash": "${local.base_git_hash}:${local.base_loader_hash}"}}' --launch-mode PARAVIRTUALIZED --operating-system "Ubuntu" --operating-system-version 22.04 | jq -r '.["opc-work-request-id"]')
+         requestId=$(oci compute image import from-object-uri --compartment-id ${var.compartment_ocid} --uri ${local.base_loader_url} --display-name "loader-img-${local.workspace}" --defined-tags '{"ROCKITPLAY-Tags": {"hash": "${local.base_git_hash}:${local.base_loader_hash}"}}' --launch-mode PARAVIRTUALIZED --operating-system "Ubuntu" --operating-system-version 24.04 | jq -r '.["opc-work-request-id"]')
          for (( ; ; )); do
             status=$(oci work-requests work-request get --work-request-id $requestId | jq -r '.data.status')
             if test x"$status" = x"SUCCEEDED"; then
@@ -40,6 +40,26 @@ resource "null_resource" "loader_img" {
          for imageOCID in $imageOCIDs; do
             oci compute image delete --force --image-id "$imageOCID"
          done
+         imageId=$(oci compute image list --compartment-id ${var.compartment_ocid} --display-name loader-img-${local.workspace} | jq -r '.data[0].id')
+         schemaId=$(oci compute image-capability-schema list --image-id $imageId | jq -r '.data[0].id')
+         # --- Create schema setting to enable multipath support
+         cat <<JSON_END > oci-mp.json
+         {
+            "Storage.Iscsi.MultipathDeviceSupported": {
+               "default-value": true,
+               "descriptor-type": "boolean",
+               "source": "IMAGE"
+            }
+         }
+         JSON_END
+         if [ -z "$schemaId" ] || [ "$schemaId" == "null" ]; then
+            # --- Create schema on image
+            versionName=$(oci compute global-image-capability-schema list | jq -r '.data[0]."current-version-name"')
+            oci compute image-capability-schema create --global-image-capability-schema-version-name $versionName --image-id $imageId --schema-data file://oci-mp.json --compartment-id ${var.compartment_ocid}
+         else
+            # --- Update existing schema on image
+            oci compute image-capability-schema update --image-capability-schema-id $schemaId --schema-data file://oci-mp.json
+         fi
       EOT
    }
    # provisioner "local-exec" {
