@@ -30,6 +30,7 @@ groupings:
   - title: "OCI DNS"
     visible: true
     variables:
+    - DNS_ZONE_OCID
     - WITH_CERT
     - CERT_OCID
     - CERT_DOMAINNAME
@@ -127,6 +128,16 @@ variables:
     type: string
     required: true
     pattern: "^[A-Za-z]+"
+
+  DNS_ZONE_OCID:
+    title: "DNS Zone  OCID"
+    description: "Please enter the OCID of the Zone object managing DNS records for
+                  the (SSL) Domain. The records necessary for ROCKITPLAY will be added
+                  and managed by the stack."
+    visible: true
+    type: string
+    required: true
+    pattern: "^ocid1.dns-zone."
 
   MONGODBATLAS_ORGID:
     title: "MongoDB Atlas Organization ID"

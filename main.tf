@@ -65,6 +65,18 @@ resource "oci_vault_secret" "rockitplay_cert_domainname" {
    }
 }
 
+resource "oci_vault_secret" "rockitplay_dns_zone_ocid" {
+   compartment_id = var.compartment_ocid
+   vault_id       = local.vault_ocid
+   key_id         = oci_kms_key.rockitplay_vault_key.id
+   secret_name    = "ROCKITPLAY_DNS_ZONE_OCID.${random_password.baseenv_id.result}"
+   description    = "OCID of DNS Zone to use of service records"
+   secret_content {
+      content_type = "BASE64"
+      content      = base64encode(var.DNS_ZONE_OCID)
+   }
+}
+
 resource "oci_vault_secret" "rockitplay_loader_image" {
    compartment_id = var.compartment_ocid
    vault_id       = local.vault_ocid

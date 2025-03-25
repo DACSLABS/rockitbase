@@ -33,6 +33,10 @@ variable "CERT_DOMAINNAME" {
   type    = string
   default = "n/a"
 }
+variable "DNS_ZONE_OCID"   {
+  type    = string
+  default = "n/a"
+}
 
 variable "MONGODBATLAS_ORGID" {
    type      = string
