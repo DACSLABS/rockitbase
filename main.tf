@@ -256,6 +256,5 @@ locals {
    rockit_base_link_data = nonsensitive(base64encode (join (",", local.rockit_base_link_args)))
 }
 
-output "rockit_base_link"  {
-  value = "dxbaselnk1.${local.rockit_base_link_data}"
-}
+output "rockit_base_link"  { value = "dxbaselnk1.${local.rockit_base_link_data}" }
+output "version"           { value = var.VERSION }
