@@ -60,6 +60,7 @@ resource "null_resource" "loader_img" {
             # --- Update existing schema on image
             oci compute image-capability-schema update --image-capability-schema-id $schemaId --schema-data file://oci-mp.json
          fi
+         oci compute image-shape-compatibility-entry add --image-id $imageId --shape-name VM.DenseIO.E4.Flex
       EOT
    }
    # provisioner "local-exec" {
