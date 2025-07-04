@@ -137,6 +137,29 @@ resource "oci_vault_secret" "rockitplay_slack_token" {
    }
 }
 
+resource "null_resource" "baseenv_secrets_gc" {
+   triggers   = { always = "${timestamp()}" }
+   provisioner "local-exec" {
+      interpreter = [ "/bin/bash", "-c" ]
+      command = <<-EOT
+         secrets=$(oci vault secret list --compartment-id ${var.compartment_ocid} --all | jq -e -r '.data[] | select(."lifecycle-state" | contains("ACTIVE")) | "\(."secret-name")=\(.id)"')
+
+         for secret in $secrets; do
+            name=$(echo $secret | cut -d= -f 1)
+            ocid=$(echo $secret | cut -d= -f 2)
+
+            deletable_versions=$(oci secrets secret-bundle-version list-versions --secret-id $ocid --all | jq -r '.data[] | select(.stages[] | contains("DEPRECATED") or contains("RETIRED")) | ."version-number"' )
+
+            for version in $deletable_versions; do
+               delete_at="$(date -d "+2 days" +%Y-%m-%dT%H:%M:%SZ)"
+               echo "scheduling deletion for secret=$name content_version=$version"
+               oci vault secret-version schedule-deletion --secret-id $ocid --secret-version-number $version --time-of-deletion "$delete_at"
+            done
+         done
+      EOT
+   }
+}
+
 # --- ROCKITPLAY Tags
 resource "null_resource" "rockitplay_tag_namespace" {
    triggers = {
