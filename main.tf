@@ -186,6 +186,7 @@ resource "null_resource" "rockitplay_tag_namespace" {
       oci iam tag create --name "orgName"  --is-cost-tracking true --description "ROCKIT organization identifier" --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
       oci iam tag create --name "appName"  --is-cost-tracking true --description "ROCKIT app identifier"          --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
       oci iam tag create --name "taskType" --is-cost-tracking true --description "ROCKIT task identifier"         --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
+      oci iam tag create --name "appPath"  --is-cost-tracking true --description "ROCKIT unique app identifier"   --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
 
       oci iam tag create --name "instanceName" --is-cost-tracking false --description "ROCKIT instance name"      --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
       oci iam tag create --name "taskLoader"   --is-cost-tracking false --description "ROCKIT Task Loader"        --tag-namespace-id $NAMESPACE_ID 2>/dev/null || echo "Tag already exists, ignoring."
