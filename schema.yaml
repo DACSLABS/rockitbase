@@ -66,7 +66,7 @@ variables:
                   resources belonging to this ROCKIT Base Environment.
                   If you plan to deploy a production system only simply use 'prod' or 'live'"
     required: true
-    pattern: "^[a-z][a-z0-9]{1,19}$"
+    pattern: "^[a-z][a-z0-9]{1,18}$"
 
   create_vault:
     title: "Create new OCI Vault"
