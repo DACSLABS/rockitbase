@@ -137,6 +137,19 @@ resource "oci_vault_secret" "rockitplay_slack_token" {
    }
 }
 
+resource "oci_vault_secret" "rockitplay_ably_token" {
+   count          = var.use_pubsub ? 1 : 0
+   compartment_id = var.compartment_ocid
+   vault_id       = local.vault_ocid
+   key_id         = oci_kms_key.rockitplay_vault_key.id
+   secret_name    = "ROCKITPLAY_ABLY_TOKEN.${random_password.baseenv_id.result}"
+   description    = "Token to access Ably for Pub/Sub support"
+   secret_content {
+      content_type = "BASE64"
+      content      = base64encode(var.ABLY_TOKEN)
+   }
+}
+
 resource "null_resource" "baseenv_secrets_gc" {
    triggers   = { always = "${timestamp()}" }
    provisioner "local-exec" {

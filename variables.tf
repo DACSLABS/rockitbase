@@ -53,6 +53,17 @@ variable "SLACK_TOKEN" {
   sensitive = true
 }
 
+variable "use_pubsub" {
+  type    = bool
+  default = false
+}
+
+variable "ABLY_TOKEN" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
 locals {
   workspace     = lower (var.WORKSPACE)
   WORKSPACE     = upper (var.WORKSPACE)

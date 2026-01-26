@@ -47,6 +47,12 @@ groupings:
     variables:
     - SLACK_TOKEN
 
+  - title: "ROCKITPLAY UI"
+    visible: true
+    variables:
+    - use_pubsub
+    - ABLY_TOKEN
+
 variables:
 
 
@@ -167,3 +173,22 @@ variables:
     type: string
     sensitive: true
     required: true
+
+  use_pubsub:
+    title: "Pub/Sub Support"
+    description: "Enable Pub/Sub support for ROCKITPLAY UI communication.
+                  If enabled, ROCKITPLAY UI will use Ably.com for real-time
+                  communication with ROCKITPLAY Clients."
+    type: boolean
+    default: false
+
+  ABLY_TOKEN:
+    title: "Ably Access Token"
+    description: "Please provide your Ably Access Token with full administrator privileges.
+                  You can create a free account at
+                  https://ably.com and create an Access Token under 'My Account' > 'My Access Tokens'."
+    type: string
+    sensitive: true
+    required: true
+    visible: ${use_pubsub}
+    default: ""
