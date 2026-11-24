@@ -6,7 +6,6 @@ data "http" "base_release_json" {
    }
 }
 locals {
-   base_src_env     = jsondecode (data.http.base_release_json.response_body).env
    base_src_hash    = jsondecode (data.http.base_release_json.response_body).srcHash
    base_git_hash    = jsondecode (data.http.base_release_json.response_body).gitHash
    base_loader_url  = jsondecode (data.http.base_release_json.response_body).loader
